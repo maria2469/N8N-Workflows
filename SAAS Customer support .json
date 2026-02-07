@@ -1,0 +1,587 @@
+{
+  "name": "SAAS Customer support",
+  "nodes": [
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": { }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        -240,
+        352
+      ],
+      "id": "e1750c32-ab34-4f61-b37f-89e937499365",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyHour",
+              "minute": 20
+            }
+          ]
+        },
+        "filters": { }
+      },
+      "type": "n8n-nodes-base.gmailTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -384,
+        112
+      ],
+      "id": "7005f114-6083-4355-a8e8-3783c0870cfe",
+      "name": "Gmail Trigger",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.snippet }}",
+        "hasOutputParser": true,
+        "options": {
+          "systemMessage": "You are the AI Decision Agent for Syncora AI. Analyze the email provided and output only JSON with the following structure:\n\n{\n  \"type\": \"<type of email: inquiry, complaint, feedback, request, etc.>\",\n  \"intent\": \"<user's intent summarized in short text>\",\n  \"sentiment\": \"<positive, neutral, negative, mixed>\",\n  \"priority\": \"<low, medium, high, urgent>\",\n  \"auto_resolveable\": true/false,\n  \"action\": \"<recommended action: reply, escalate, forward, ignore, etc.>\"\n\"id\": \"19c395ff985317ce\"\n}\n\n\nInstructions:\n\nRead the email carefully.\n\nDetermine each field accurately based on the email content.\n\nOutput only valid JSON with separate key value pairs; do not include explanations, text, or markdown.\n\nExample Output:\n\n{\n  \"type\": \"request\",\n  \"intent\": \"user wants access to API documentation\",\n  \"sentiment\": \"neutral\",\n  \"priority\": \"medium\",\n  \"auto_resolveable\": true,\n  \"action\": \"send documentation link automatically\"\n}\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        -160,
+        112
+      ],
+      "id": "1642cf99-138e-4a78-90d3-c116ab3e8113",
+      "name": "Decision Agent"
+    },
+    {
+      "parameters": {
+        "dataType": "binary",
+        "textSplittingMode": "custom",
+        "options": { }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        192,
+        1168
+      ],
+      "id": "685e28ba-1827-42b3-ab7c-7958c6f38714",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {
+        "operation": "download",
+        "fileId": {
+          "__rl": true,
+          "value": "={{ $json.id }}",
+          "mode": "id"
+        },
+        "options": { }
+      },
+      "type": "n8n-nodes-base.googleDrive",
+      "typeVersion": 3,
+      "position": [
+        -160,
+        944
+      ],
+      "id": "a4bb8206-fe6c-483c-b63b-228103c32b3c",
+      "name": "Download file",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "pollTimes": {
+          "item": [
+            {
+              "mode": "everyMinute"
+            }
+          ]
+        },
+        "triggerOn": "specificFile",
+        "fileToWatch": {
+          "__rl": true,
+          "value": "1ksZzA1-EvfrbpwH8uOfSIuG8noPACTeSzIfyxfML6hg",
+          "mode": "list",
+          "cachedResultName": "📄 Syncora AI Knowledge Base Document (Sample Structure)",
+          "cachedResultUrl": "https://docs.google.com/document/d/1ksZzA1-EvfrbpwH8uOfSIuG8noPACTeSzIfyxfML6hg/edit?usp=drivesdk"
+        }
+      },
+      "type": "n8n-nodes-base.googleDriveTrigger",
+      "typeVersion": 1,
+      "position": [
+        -384,
+        944
+      ],
+      "id": "ce8277c6-509d-420f-ac93-11ecd5f11050",
+      "name": "Google Drive Trigger",
+      "credentials": {
+        "googleDriveOAuth2Api": {
+          "id": "",
+          "name": "Google Drive account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "faq",
+          "mode": "list",
+          "cachedResultName": "faq"
+        },
+        "embeddingBatchSize": 400,
+        "options": {
+          "clearNamespace": false,
+          "pineconeNamespace": "syncora"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        96,
+        944
+      ],
+      "id": "63748ffa-871e-48c0-af9b-bfa46512696c",
+      "name": "Pinecone Vector Store",
+      "credentials": {
+        "pineconeApi": {
+          "id": "",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": { }
+      },
+      "type": "@n8n/n8n-nodes-langchain.textSplitterRecursiveCharacterTextSplitter",
+      "typeVersion": 1,
+      "position": [
+        272,
+        1376
+      ],
+      "id": "adbf101f-f788-461f-9c8e-b8fe13212d13",
+      "name": "Recursive Character Text Splitter1"
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        64,
+        1168
+      ],
+      "id": "f31ae92f-8fb3-428a-a643-e86e69f300f5",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "62cbd649-d06f-47a2-bdfa-fc288578005d",
+              "leftValue": "={{ $json.output.action }}",
+              "rightValue": "escalate to billing",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            },
+            {
+              "id": "f5b04e19-72a3-453f-a75c-7f87181cfece",
+              "leftValue": "={{ $json.output.action }}",
+              "rightValue": "escalate",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": { }
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        192,
+        112
+      ],
+      "id": "27d296ba-0949-41c7-92ee-4fc6636c3dc0",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"type\": \"inquiry\",\n  \"intent\": \"user asking about available cities in California\",\n  \"sentiment\": \"neutral\",\n  \"priority\": \"low\",\n  \"auto_resolveable\": true,\n  \"action\": \"reply\",\n  \"id\": \"19c395ff985317ce\"\n}\n"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        -32,
+        336
+      ],
+      "id": "c02251cf-f8db-4f8e-a32d-43030cecf762",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "C09614GFF1B",
+          "mode": "list",
+          "cachedResultName": "syncora-billing"
+        },
+        "text": "=This issue needs Immediate Action :   \n{{ $json.output.intent }}\ntype : {{ $json.output.type }}\nsentiment : {{ $json.output.sentiment }}\nPriority  : {{ $json.output.priority }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.4,
+      "position": [
+        560,
+        -128
+      ],
+      "id": "7ce0ae0e-5804-42bd-b615-9c3ba2bb0b61",
+      "name": "Send a message",
+      "webhookId": "eb8745e2-5720-4df5-aa98-816f674f62aa",
+      "credentials": {
+        "slackOAuth2Api": {
+          "id": "",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "openai/gpt-oss-20b",
+        "options": { }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        416,
+        320
+      ],
+      "id": "22bbefee-121a-4b54-8326-b87ed51a2e47",
+      "name": "Groq Chat Model1",
+      "credentials": {
+        "groqApi": {
+          "id": "",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v2.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        624,
+        528
+      ],
+      "id": "f7b1e568-4064-46f5-885b-ca8792ae337e",
+      "name": "Embeddings Cohere1",
+      "credentials": {
+        "cohereApi": {
+          "id": "",
+          "name": "CohereApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Email intent : {{ $json.output.intent }}\nEmail type : {{ $json.output.type }}\nEmail sentiment : {{ $json.output.sentiment }}",
+        "options": {
+          "systemMessage": "You are a Syncora's Customer Support Agent that help Customers by replying to their queries..\n\n ## Tools\nKnowledge_Base : Use this to answer User queries Send_reply : Use this tool to send a suitable reply to customer query.Be concise and Kind .Also make sure the reply is beautifuly formatted.\n\n ##Instructions :\nDont' add information on your own\nReply with nice and kind words\n\nSign off as Sycora's Support Team "
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        592,
+        112
+      ],
+      "id": "5f9c6b76-9cbd-44d0-b90c-7ff01f643203",
+      "name": "Email Response Agent"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Use this tool to retrieve required information",
+        "pineconeIndex": {
+          "__rl": true,
+          "value": "faq",
+          "mode": "list",
+          "cachedResultName": "faq"
+        },
+        "topK": 10,
+        "includeDocumentMetadata": false,
+        "options": {
+          "pineconeNamespace": "syncora"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStorePinecone",
+      "typeVersion": 1.3,
+      "position": [
+        544,
+        320
+      ],
+      "id": "e9064b0d-c0fb-47cf-a0f0-083b33df737d",
+      "name": "Knowledge_Base",
+      "credentials": {
+        "pineconeApi": {
+          "id": "WAf2d2azos4GIEcW",
+          "name": "PineconeApi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Reply to a message in Gmail",
+        "operation": "reply",
+        "messageId": "={{ $json.output.id }}\n",
+        "message": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Message', ``, 'string') }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmailTool",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        288
+      ],
+      "id": "7b4b463b-2b0b-4a27-be5d-60d5a283685b",
+      "name": "Reply to a message in Gmail",
+      "webhookId": "6d48a33f-3589-4d9e-b807-528f9aa28138",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account 2"
+        }
+      }
+    }
+  ],
+  "pinData": { },
+  "connections": {
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Decision Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gmail Trigger": {
+      "main": [
+        [
+          {
+            "node": "Decision Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Download file": {
+      "main": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Drive Trigger": {
+      "main": [
+        [
+          {
+            "node": "Download file",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Recursive Character Text Splitter1": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Pinecone Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decision Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Decision Agent",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Email Response Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Email Response Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere1": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Knowledge_Base",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Knowledge_Base": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Response Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reply to a message in Gmail": {
+      "ai_tool": [
+        [
+          {
+            "node": "Email Response Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Send a message": {
+      "main": [
+        [ ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "e490e670-57d8-4fd3-994e-3bae9e605594",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8e553a4f6748f03953edbc7cf5d1a895bbd00e0dbd99b9d8e2bdae79de1a6051"
+  },
+  "id": "Mr4u-Wl4B8Esv_LeOD-Z6",
+  "tags": [ ]
+}
